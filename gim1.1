@@ -1,0 +1,189 @@
+import requests
+
+def fetch_code_from_github(repo_url, file_path):
+    """
+    Fetches raw code from a specific file in a GitHub repository.
+    :param repo_url: GitHub repository URL (e.g., https://github.com/username/repo)
+    :param file_path: Path to the file in the repository (e.g., 'path/to/file.py')
+    :return: The raw code from the file
+    """
+    # Construct the raw URL of the file (GitHub raw content URL pattern)
+    raw_url = f"https://raw.githubusercontent.com/{repo_url.split('github.com/')[1]}/main/{file_path}"
+    
+    print(f"Fetching raw code from: {raw_url}")
+    
+    # Send GET request to the raw file URL
+    response = requests.get(raw_url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        return response.text
+    else:
+        print(f"Failed to fetch the file. Status code: {response.status_code}")
+        return None
+
+# Example Usage:
+repo_url = "https://github.com/username/repository"  # Change this to the GitHub repo URL
+file_path = "path/to/your_file.py"  # Path to the Python file you want to scrape
+code = fetch_code_from_github(repo_url, file_path)
+
+if code:
+    print("Fetched code:")
+    print(code)
+import re
+
+def integrate_code_into_function(existing_function_code, new_code):
+    """
+    Integrates new code into an existing Python function.
+    
+    :param existing_function_code: The existing Python function as a string.
+    :param new_code: The new code to insert into the function as a string.
+    :return: The modified Python function as a string.
+    """
+    # Regular expression to find the function signature and the function body
+    function_pattern = re.compile(r'(def \w+\(.*\):)([\s\S]*)')  # Matches function signature and body
+    match = function_pattern.match(existing_function_code)
+    
+    if match:
+        # Extract the function signature (e.g., 'def my_function():')
+        function_signature = match.group(1)
+        
+        # Extract the body of the function (the code within the function)
+        function_body = match.group(2)
+        
+        # Integrate the new code by adding it to the body
+        new_function_body = function_body.strip() + "\n    " + new_code.strip()  # Ensures proper indentation
+        
+        # Create the new function by combining the signature and new body
+        integrated_function = function_signature + "\n" + new_function_body
+        return integrated_function
+    else:
+        print("Error: Could not parse the existing function.")
+        return None
+
+# Example Usage:
+existing_function_code = """
+def my_function():
+    print("Hello World!")
+"""
+
+new_code = 'print("New code added!")'
+
+# Integrating the new code
+integrated_function = integrate_code_into_function(existing_function_code, new_code)
+
+if integrated_function:
+    print("Integrated function:")
+    print(integrated_function)
+import re
+
+def optimize_code(function_code):
+    """
+    Optimizes a Python function's code by performing simple optimizations.
+    
+    :param function_code: The Python function code as a string.
+    :return: The optimized Python function code as a string.
+    """
+    
+    # Example of optimizations:
+    
+    # 1. Remove redundant variable assignments (e.g., x = x + 1 -> x += 1)
+    function_code = re.sub(r'(\w+)\s*=\s*\1\s*\+\s*1', r'\1 += 1', function_code)
+    
+    # 2. Replace inefficient 'for' loop searches with set lookups
+    function_code = re.sub(r'for\s+(\w+)\s+in\s+(\[\w+\])', r'for \1 in set(\2)', function_code)
+    
+    # 3. Remove redundant variable assignments (unused variables or unnecessary assignments)
+    function_code = re.sub(r'\w+\s*=\s*\w+', '', function_code)  # Remove assignments that have no impact.
+    
+    # 4. Optimize print statements (simplified check for unnecessary prints)
+    function_code = re.sub(r'print\([^\)]*\)', '', function_code)  # Remove unnecessary print calls for optimization
+
+    # 5. Eliminate redundant return statements (if multiple returns in the function)
+    function_code = re.sub(r'return\s+.*\n\s*return\s+.*', r'return \g<0>', function_code)
+
+    # Additional custom optimizations can be added here (like replacing loops with list comprehensions, etc.)
+
+    return function_code
+
+# Example Usage:
+existing_function_code = """
+def example_function():
+    x = 10
+    y = 20
+    print("Adding numbers")
+    z = x + y
+    return x + y
+"""
+
+# Optimizing the code
+optimized_code = optimize_code(existing_function_code)
+
+print("Optimized function code:")
+print(optimized_code)
+import time
+import tracemalloc
+from memory_profiler import memory_usage
+
+def run_and_profile(func, *args, **kwargs):
+    """
+    Runs a function and returns execution time and memory usage.
+    """
+    # Measure memory before and after
+    mem_usage_before = memory_usage()[0]
+    
+    # Start time and memory tracking
+    start_time = time.perf_counter()
+    tracemalloc.start()
+    
+    # Run the function
+    result = func(*args, **kwargs)
+    
+    # Stop time and memory tracking
+    end_time = time.perf_counter()
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    mem_usage_after = memory_usage()[0]
+    
+    return {
+        "result": result,
+        "execution_time_ms": (end_time - start_time) * 1000,
+        "peak_memory_kb": peak / 1024,
+        "memory_used_mb": mem_usage_after - mem_usage_before
+    }
+
+def generate_efficiency_report(original_func, optimized_func, *args, **kwargs):
+    """
+    Generates a report comparing original and optimized function performance.
+    """
+    print("Running original function...")
+    original = run_and_profile(original_func, *args, **kwargs)
+    
+    print("Running optimized function...")
+    optimized = run_and_profile(optimized_func, *args, **kwargs)
+
+    print("\n====== Efficiency Report ======")
+    print(f"Function: {original_func.__name__}")
+    print(f"Execution Time - Original: {original['execution_time_ms']:.3f} ms")
+    print(f"Execution Time - Optimized: {optimized['execution_time_ms']:.3f} ms")
+    print(f"Memory Used - Original: {original['memory_used_mb']:.3f} MB")
+    print(f"Memory Used - Optimized: {optimized['memory_used_mb']:.3f} MB")
+    print(f"Peak Memory - Original: {original['peak_memory_kb']:.2f} KB")
+    print(f"Peak Memory - Optimized: {optimized['peak_memory_kb']:.2f} KB")
+
+    # Comparison
+    faster = optimized['execution_time_ms'] < original['execution_time_ms']
+    less_memory = optimized['memory_used_mb'] < original['memory_used_mb']
+    
+    print("\nImprovement Detected:")
+    print(f" - Faster: {'Yes' if faster else 'No'}")
+    print(f" - Less Memory: {'Yes' if less_memory else 'No'}")
+    
+    return {
+        "original": original,
+        "optimized": optimized,
+        "improvement": {
+            "faster": faster,
+            "less_memory": less_memory
+        }
+    }
